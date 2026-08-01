@@ -3,8 +3,9 @@ import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { pmSetupTool } from './tools/pm-setup.js';
+import { pmCreateSubtasksTool } from './tools/pm-create-subtasks.js';
 
-const TOOLS = [pmSetupTool];
+const TOOLS = [pmSetupTool, pmCreateSubtasksTool];
 
 const server = new McpServer({ name: 'pm-gensubtask', version: '0.1.0' });
 

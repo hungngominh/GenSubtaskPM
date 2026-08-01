@@ -1,0 +1,88 @@
+// tests/tools/pm-create-subtasks.test.js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pmCreateSubtasksTool } from '../../mcp/tools/pm-create-subtasks.js';
+import { getTasksForParent } from '../../mcp/state-store.js';
+
+function withTempDir(fn) {
+  const dir = mkdtempSync(join(tmpdir(), 'pm-create-'));
+  return fn(dir).finally(() => rmSync(dir, { recursive: true, force: true }));
+}
+
+test('creates a new subtask via POST create-task when not found anywhere', () =>
+  withTempDir(async (dir) => {
+    let createCalls = 0;
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: [{ id: 'parent-1', subtasks: [] }] }) };
+      }
+      createCalls++;
+      return {
+        ok: true,
+        status: 201,
+        json: async () => ({ status: 'success', data: { id: 'child-1', code: 'TASK-0001', title: 'Do the thing', status_code: 'BACKLOG' } }),
+      };
+    };
+    const result = await pmCreateSubtasksTool.handler(
+      { parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] },
+      { cwd: dir }
+    );
+    assert.equal(createCalls, 1);
+    assert.match(result.content[0].text, /Created 1 subtask/);
+    assert.equal(getTasksForParent(dir, 'parent-1')['Do the thing'].id, 'child-1');
+  }));
+
+test('skips creating when local state already has the task', () =>
+  withTempDir(async (dir) => {
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: [{ id: 'parent-1', subtasks: [] }] }) };
+      }
+      return { ok: true, status: 201, json: async () => ({ status: 'success', data: { id: 'child-1', code: 'TASK-0001', status_code: 'BACKLOG' } }) };
+    };
+    await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+
+    let createCalls = 0;
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) return { ok: true, status: 200, json: async () => ({ status: 'success', data: [] }) };
+      createCalls++;
+      throw new Error('should not be called');
+    };
+    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    assert.equal(createCalls, 0);
+    assert.match(result.content[0].text, /Skipped 1/);
+  }));
+
+test('skips creating when get-tasks shows the child already exists in the PM system', () =>
+  withTempDir(async (dir) => {
+    let createCalls = 0;
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ status: 'success', data: [{ id: 'parent-1', subtasks: [{ id: 'existing-1', title: 'Do the thing' }] }] }),
+        };
+      }
+      createCalls++;
+      throw new Error('should not be called');
+    };
+    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    assert.equal(createCalls, 0);
+    assert.match(result.content[0].text, /Skipped 1/);
+    assert.equal(getTasksForParent(dir, 'parent-1')['Do the thing'].id, 'existing-1');
+  }));
+
+test('surfaces a VALIDATION error from create-task without throwing', () =>
+  withTempDir(async (dir) => {
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) return { ok: true, status: 200, json: async () => ({ status: 'success', data: [] }) };
+      return { ok: false, status: 400, json: async () => ({ status: 'error', message: 'title is required' }) };
+    };
+    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /title is required/);
+  }));

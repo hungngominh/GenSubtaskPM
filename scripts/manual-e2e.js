@@ -8,8 +8,10 @@ import { pmCompleteSubtaskTool } from '../mcp/tools/pm-complete-subtask.js';
 import { pmAuditStatusTool } from '../mcp/tools/pm-audit-status.js';
 
 const parentTaskId = process.argv[2];
-if (!parentTaskId) {
-  console.error('Usage: node scripts/manual-e2e.js <parent_task_id>');
+const assigneeId = process.argv[3];
+if (!parentTaskId || !assigneeId) {
+  console.error('Usage: node scripts/manual-e2e.js <parent_task_id> <assignee_id>');
+  console.error('Run pm_list_members first to find a valid assignee_id.');
   process.exit(1);
 }
 
@@ -25,7 +27,7 @@ printResult('pm_setup', await pmSetupTool.handler({}, { cwd }));
 
 const smokeTaskTitle = `manual-e2e smoke task ${Date.now()}`;
 const createResult = await pmCreateSubtasksTool.handler(
-  { parent_task_id: parentTaskId, tasks: [{ title: smokeTaskTitle }] },
+  { parent_task_id: parentTaskId, tasks: [{ title: smokeTaskTitle, assignee_id: assigneeId }] },
   { cwd }
 );
 printResult('pm_create_subtasks', createResult);

@@ -27,7 +27,7 @@ test('creates a new subtask via POST create-task when not found anywhere', () =>
       };
     };
     const result = await pmCreateSubtasksTool.handler(
-      { parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] },
+      { parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing', assignee_id: 'user-1' }] },
       { cwd: dir }
     );
     assert.equal(createCalls, 1);
@@ -43,7 +43,7 @@ test('skips creating when local state already has the task', () =>
       }
       return { ok: true, status: 201, json: async () => ({ status: 'success', data: { id: 'child-1', code: 'TASK-0001', status_code: 'BACKLOG' } }) };
     };
-    await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing', assignee_id: 'user-1' }] }, { cwd: dir });
 
     let createCalls = 0;
     global.fetch = async (url) => {
@@ -51,7 +51,7 @@ test('skips creating when local state already has the task', () =>
       createCalls++;
       throw new Error('should not be called');
     };
-    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing', assignee_id: 'user-1' }] }, { cwd: dir });
     assert.equal(createCalls, 0);
     assert.match(result.content[0].text, /Skipped 1/);
   }));
@@ -70,7 +70,7 @@ test('skips creating when get-tasks shows the child already exists in the PM sys
       createCalls++;
       throw new Error('should not be called');
     };
-    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing', assignee_id: 'user-1' }] }, { cwd: dir });
     assert.equal(createCalls, 0);
     assert.match(result.content[0].text, /Skipped 1/);
     assert.equal(getTasksForParent(dir, 'parent-1')['Do the thing'].id, 'existing-1');
@@ -82,7 +82,7 @@ test('surfaces a VALIDATION error from create-task without throwing', () =>
       if (url.endsWith('/get-tasks')) return { ok: true, status: 200, json: async () => ({ status: 'success', data: [] }) };
       return { ok: false, status: 400, json: async () => ({ status: 'error', message: 'title is required' }) };
     };
-    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+    const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing', assignee_id: 'user-1' }] }, { cwd: dir });
     assert.equal(result.isError, true);
     assert.match(result.content[0].text, /title is required/);
   }));
@@ -105,7 +105,7 @@ test('includes a partial-progress summary when a mid-batch failure occurs', () =
       return { ok: false, status: 400, json: async () => ({ status: 'error', message: 'title is required' }) };
     };
     const result = await pmCreateSubtasksTool.handler(
-      { parent_task_id: 'parent-1', tasks: [{ title: 'Task One' }, { title: 'Task Two' }] },
+      { parent_task_id: 'parent-1', tasks: [{ title: 'Task One', assignee_id: 'user-1' }, { title: 'Task Two', assignee_id: 'user-1' }] },
       { cwd: dir }
     );
     assert.equal(result.isError, true);
@@ -123,10 +123,26 @@ test('resolves with isError instead of throwing on a non-PmApiError failure', ()
       throw new TypeError('fetch failed');
     };
     try {
-      const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+      const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing', assignee_id: 'user-1' }] }, { cwd: dir });
       assert.equal(result.isError, true);
       assert.match(result.content[0].text, /Unexpected error during pm_create_subtasks/);
     } finally {
       global.fetch = originalFetch;
     }
+  }));
+
+test('rejects the whole batch without creating anything when a task is missing assignee_id', () =>
+  withTempDir(async (dir) => {
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      throw new Error('should not be called');
+    };
+    const result = await pmCreateSubtasksTool.handler(
+      { parent_task_id: 'parent-1', tasks: [{ title: 'Task One', assignee_id: 'user-1' }, { title: 'Task Two' }] },
+      { cwd: dir }
+    );
+    assert.equal(calls, 0);
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Missing assignee_id for: Task Two/);
   }));

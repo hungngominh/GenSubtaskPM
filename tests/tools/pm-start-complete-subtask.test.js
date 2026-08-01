@@ -32,12 +32,15 @@ test('pm_start_subtask PATCHes DOING and posts a Started-at checklist item', () 
     assert.equal(getTasksForParent(dir, 'parent-1')['Do the thing'].status, 'DOING');
   }));
 
-test('pm_complete_subtask PATCHes DONE/100 with actual_hours and posts a Completed-at checklist item', () =>
+test('pm_complete_subtask PATCHes DONE/100 with accumulated actual_hours and posts a Completed-at checklist item', () =>
   withTempDir(async (dir) => {
     upsertTask(dir, 'parent-1', 'Do the thing', { id: 'child-1', code: 'TASK-0001', status: 'DOING' });
     const calls = [];
     global.fetch = async (url, opts) => {
       calls.push({ url, body: opts.body ? JSON.parse(opts.body) : null });
+      if (url.endsWith('/get-task/child-1')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', actual_hours: 4 } }) };
+      }
       if (url.endsWith('/tasks/child-1')) {
         return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', status_code: 'DONE' } }) };
       }
@@ -45,9 +48,24 @@ test('pm_complete_subtask PATCHes DONE/100 with actual_hours and posts a Complet
     };
     await pmCompleteSubtaskTool.handler({ task_id: 'child-1', actual_hours: 3.5 }, { cwd: dir });
 
-    assert.deepEqual(calls[0].body, { status_code: 'DONE', progress_percent: 100, actual_hours: 3.5 });
-    assert.equal(calls[1].body.items[0].title, 'Completed at');
+    const patchCall = calls.find((c) => c.url.endsWith('/tasks/child-1'));
+    assert.deepEqual(patchCall.body, { status_code: 'DONE', progress_percent: 100, actual_hours: 7.5 });
+    const checklistCall = calls.find((c) => c.body?.items);
+    assert.equal(checklistCall.body.items[0].title, 'Completed at');
     assert.equal(getTasksForParent(dir, 'parent-1')['Do the thing'].status, 'DONE');
+  }));
+
+test('pm_complete_subtask rejects when actual_hours is missing, without calling the API', () =>
+  withTempDir(async (dir) => {
+    let called = false;
+    global.fetch = async () => {
+      called = true;
+      return { ok: true, status: 200, json: async () => ({ status: 'success', data: {} }) };
+    };
+    const result = await pmCompleteSubtaskTool.handler({ task_id: 'child-1' }, { cwd: dir });
+    assert.equal(called, false);
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /actual_hours is required/);
   }));
 
 test('pm_start_subtask surfaces a NOT_FOUND error without throwing', () =>

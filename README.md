@@ -19,9 +19,10 @@ implementation work happens locally.
 | `pm_setup` | Resolve and validate `PM_API_KEY` against the PM system. |
 | `pm_create_subtasks` | Create PM subtasks under a parent task, deduplicated. |
 | `pm_start_subtask` | Mark a subtask DOING + log a Started-at checklist entry. |
-| `pm_complete_subtask` | Mark a subtask DONE at 100% + log a Completed-at checklist entry. |
-| `pm_update_progress` | Patch `progress_percent` / `status_code` / `actual_hours` mid-task. |
+| `pm_complete_subtask` | Mark a subtask DONE at 100% + log a Completed-at checklist entry. Requires `actual_hours` (hours worked since the last update); it is added to the task's existing total, not overwritten. |
+| `pm_update_progress` | Patch `progress_percent` / `status_code` mid-task. Requires `actual_hours` (hours worked since the last update); it is added to the task's existing total, not overwritten. |
 | `pm_audit_status` | Read-only cross-check of local sync state vs. the live PM system. |
+| `pm_list_members` | List project members with `user_id`/roles, for resolving `assignee_id`. |
 
 ## Skill
 
@@ -31,8 +32,9 @@ you want PM board sync woven into the same per-task loop.
 ## Testing
 
 - `npm test` — unit tests, HTTP layer mocked, no live calls.
-- `node scripts/manual-e2e.js <parent_task_id>` — manual/live verification against the real PM API.
-  Requires a real `PM_API_KEY` and a real `parent_task_id`. Not run in CI.
+- `node scripts/manual-e2e.js <parent_task_id> <assignee_id>` — manual/live verification against the real
+  PM API. Requires a real `PM_API_KEY`, a real `parent_task_id`, and a real `assignee_id` (use
+  `pm_list_members` to find one). Not run in CI.
 
 ## State
 

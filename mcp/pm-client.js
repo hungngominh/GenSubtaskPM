@@ -59,6 +59,10 @@ export async function getTasks(config) {
   return request(config, 'GET', '/v1/bot-agents/get-tasks');
 }
 
+export async function getMembers(config) {
+  return request(config, 'GET', '/v1/bot-agents/get-members');
+}
+
 export async function getTaskDetail(config, taskId) {
   return request(config, 'GET', `/v1/bot-agents/get-task/${taskId}`);
 }

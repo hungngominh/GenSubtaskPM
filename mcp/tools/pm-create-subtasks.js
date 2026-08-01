@@ -10,7 +10,7 @@ const taskInputSchema = z.object({
   description: z.string().optional(),
   workstream: z.string().optional(),
   layer: z.string().optional(),
-  assignee_id: z.string().optional(),
+  assignee_id: z.string().min(1, 'assignee_id is required — call pm_list_members to find a valid user_id'),
 });
 
 function formatBatchSummary(created, skipped) {
@@ -31,11 +31,24 @@ export const pmCreateSubtasksTool = {
   description:
     'Call once you have a fixed list of tasks to track in the PM system, before starting work on any of ' +
     'them. Creates one real PM task per item under parent_task_id, skipping any that already exist ' +
-    '(checked locally and against the live PM system).',
+    '(checked locally and against the live PM system). Every task must have an assignee_id — call ' +
+    'pm_list_members first if you do not already know it; never invent one or leave it blank.',
   inputSchema: { parent_task_id: z.string(), tasks: z.array(taskInputSchema) },
   handler: async ({ parent_task_id, tasks }, ctx = {}) => {
     const cwd = ctx.cwd || process.cwd();
     const config = resolveConfig(cwd);
+
+    const missingAssignee = tasks.filter((t) => !t.assignee_id).map((t) => t.title);
+    if (missingAssignee.length) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Missing assignee_id for: ${missingAssignee.join(', ')}. Call pm_list_members to find a valid user_id, then retry with assignee_id set for every task.`,
+        }],
+        isError: true,
+      };
+    }
+
     const localTasks = getTasksForParent(cwd, parent_task_id);
     let liveTasks = null;
     const created = [];

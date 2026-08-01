@@ -87,6 +87,34 @@ test('surfaces a VALIDATION error from create-task without throwing', () =>
     assert.match(result.content[0].text, /title is required/);
   }));
 
+test('includes a partial-progress summary when a mid-batch failure occurs', () =>
+  withTempDir(async (dir) => {
+    let createCalls = 0;
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: [{ id: 'parent-1', subtasks: [] }] }) };
+      }
+      createCalls++;
+      if (createCalls === 1) {
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ status: 'success', data: { id: 'child-1', code: 'TASK-0001', title: 'Task One', status_code: 'BACKLOG' } }),
+        };
+      }
+      return { ok: false, status: 400, json: async () => ({ status: 'error', message: 'title is required' }) };
+    };
+    const result = await pmCreateSubtasksTool.handler(
+      { parent_task_id: 'parent-1', tasks: [{ title: 'Task One' }, { title: 'Task Two' }] },
+      { cwd: dir }
+    );
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Created 1 subtask/);
+    assert.match(result.content[0].text, /Task One/);
+    assert.match(result.content[0].text, /title is required/);
+    assert.equal(getTasksForParent(dir, 'parent-1')['Task One'].id, 'child-1');
+  }));
+
 test('resolves with isError instead of throwing on a non-PmApiError failure', () =>
   withTempDir(async (dir) => {
     const originalFetch = global.fetch;

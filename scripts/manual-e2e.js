@@ -23,15 +23,15 @@ const cwd = process.cwd();
 
 printResult('pm_setup', await pmSetupTool.handler({}, { cwd }));
 
+const smokeTaskTitle = `manual-e2e smoke task ${Date.now()}`;
 const createResult = await pmCreateSubtasksTool.handler(
-  { parent_task_id: parentTaskId, tasks: [{ title: `manual-e2e smoke task ${Date.now()}` }] },
+  { parent_task_id: parentTaskId, tasks: [{ title: smokeTaskTitle }] },
   { cwd }
 );
 printResult('pm_create_subtasks', createResult);
 
-const { findTaskById } = await import('../mcp/state-store.js');
-const created = Object.values((await import('../mcp/state-store.js')).getTasksForParent(cwd, parentTaskId))
-  .find((t) => t.status === 'BACKLOG' || t.status === null);
+const { getTasksForParent } = await import('../mcp/state-store.js');
+const created = getTasksForParent(cwd, parentTaskId)[smokeTaskTitle];
 if (!created) throw new Error('Could not find the freshly created task in local state.');
 
 printResult('pm_start_subtask', await pmStartSubtaskTool.handler({ task_id: created.id }, { cwd }));

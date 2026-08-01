@@ -30,9 +30,11 @@ export const pmAuditStatusTool = {
     const parentEntry = liveTasks.find((t) => t.id === parent_task_id);
     const liveChildIds = new Set((parentEntry?.subtasks ?? []).map((s) => s.id));
 
+    const knownStatuses = ['BACKLOG', 'PICK', 'TODO', 'DOING', 'TESTING', 'DONE'];
     const missingLive = [];
     const neverStarted = [];
     const notCompleted = [];
+    const statusUnknown = [];
 
     for (const [title, record] of Object.entries(localTasks)) {
       if (!liveChildIds.has(record.id)) {
@@ -43,6 +45,8 @@ export const pmAuditStatusTool = {
         neverStarted.push({ title, record });
       } else if (['DOING', 'TESTING'].includes(record.status)) {
         notCompleted.push({ title, record });
+      } else if (!knownStatuses.includes(record.status)) {
+        statusUnknown.push({ title, record });
       }
     }
 
@@ -58,6 +62,12 @@ export const pmAuditStatusTool = {
     if (notCompleted.length) {
       lines.push(`${notCompleted.length} subtask(s) started but not completed:`);
       for (const { title, record } of notCompleted) lines.push(`- ${title} (${record.id}): still ${record.status}`);
+    }
+    if (statusUnknown.length) {
+      lines.push(`${statusUnknown.length} subtask(s) with status unknown — verify manually:`);
+      for (const { title, record } of statusUnknown) {
+        lines.push(`- ${title} (${record.id}): recorded status is ${record.status === null || record.status === undefined ? 'null' : JSON.stringify(record.status)}`);
+      }
     }
     if (!lines.length) lines.push('All tracked subtasks are consistent between local state and the PM system.');
 

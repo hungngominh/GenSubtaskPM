@@ -13,6 +13,19 @@ const taskInputSchema = z.object({
   assignee_id: z.string().optional(),
 });
 
+function formatBatchSummary(created, skipped) {
+  const lines = [];
+  if (created.length) {
+    lines.push(`Created ${created.length} subtask(s):`);
+    for (const c of created) lines.push(`- ${c.code} (${c.id}): ${c.title}`);
+  }
+  if (skipped.length) {
+    lines.push(`Skipped ${skipped.length} already-existing subtask(s):`);
+    for (const s of skipped) lines.push(`- ${s.title} (${s.reason})`);
+  }
+  return lines;
+}
+
 export const pmCreateSubtasksTool = {
   name: 'pm_create_subtasks',
   description:
@@ -57,18 +70,14 @@ export const pmCreateSubtasksTool = {
       const message = err instanceof PmApiError
         ? describePmError(err)
         : `Unexpected error during pm_create_subtasks: ${err.message}`;
-      return { content: [{ type: 'text', text: message }], isError: true };
+      const partialLines = formatBatchSummary(created, skipped);
+      const text = partialLines.length
+        ? `${partialLines.join('\n')}\n\nThe batch stopped after this partial progress due to an error:\n${message}`
+        : message;
+      return { content: [{ type: 'text', text }], isError: true };
     }
 
-    const lines = [];
-    if (created.length) {
-      lines.push(`Created ${created.length} subtask(s):`);
-      for (const c of created) lines.push(`- ${c.code} (${c.id}): ${c.title}`);
-    }
-    if (skipped.length) {
-      lines.push(`Skipped ${skipped.length} already-existing subtask(s):`);
-      for (const s of skipped) lines.push(`- ${s.title} (${s.reason})`);
-    }
+    const lines = formatBatchSummary(created, skipped);
     lines.push(
       'IMPORTANT: call pm_start_subtask(task_id) right before starting work on each of these, and pm_complete_subtask(task_id) right after it is verified done.'
     );

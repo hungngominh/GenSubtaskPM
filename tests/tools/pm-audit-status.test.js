@@ -60,6 +60,22 @@ test('reports a tracked subtask missing from the live PM system', () =>
     assert.match(result.content[0].text, /not found under the parent/);
   }));
 
+test('reports a subtask with an unrecognized/null status as status unknown', () =>
+  withTempDir(async (dir) => {
+    upsertTask(dir, 'parent-1', 'Do the thing', { id: 'child-1', code: null, status: null });
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: 'success',
+        data: [{ id: 'parent-1', subtasks: [{ id: 'child-1', title: 'Do the thing' }] }],
+      }),
+    });
+    const result = await pmAuditStatusTool.handler({ parent_task_id: 'parent-1' }, { cwd: dir });
+    assert.match(result.content[0].text, /status unknown/i);
+    assert.doesNotMatch(result.content[0].text, /All tracked subtasks are consistent/);
+  }));
+
 test('pm_audit_status handles non-PmApiError exceptions without throwing', () =>
   withTempDir(async (dir) => {
     upsertTask(dir, 'parent-1', 'Do the thing', { id: 'child-1', code: 'TASK-0001', status: 'DOING' });

@@ -4,8 +4,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { pmSetupTool } from './tools/pm-setup.js';
 import { pmCreateSubtasksTool } from './tools/pm-create-subtasks.js';
+import { pmStartSubtaskTool } from './tools/pm-start-subtask.js';
+import { pmCompleteSubtaskTool } from './tools/pm-complete-subtask.js';
 
-const TOOLS = [pmSetupTool, pmCreateSubtasksTool];
+const TOOLS = [pmSetupTool, pmCreateSubtasksTool, pmStartSubtaskTool, pmCompleteSubtaskTool];
 
 const server = new McpServer({ name: 'pm-gensubtask', version: '0.1.0' });
 

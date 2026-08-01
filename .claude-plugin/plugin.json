@@ -1,0 +1,5 @@
+{
+  "name": "pm-gensubtask",
+  "description": "Creates and syncs subtasks with the Alliance ITSC PM system while implementation work happens locally.",
+  "version": "0.1.0"
+}

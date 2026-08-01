@@ -86,3 +86,19 @@ test('surfaces a VALIDATION error from create-task without throwing', () =>
     assert.equal(result.isError, true);
     assert.match(result.content[0].text, /title is required/);
   }));
+
+test('resolves with isError instead of throwing on a non-PmApiError failure', () =>
+  withTempDir(async (dir) => {
+    const originalFetch = global.fetch;
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) return { ok: true, status: 200, json: async () => ({ status: 'success', data: [] }) };
+      throw new TypeError('fetch failed');
+    };
+    try {
+      const result = await pmCreateSubtasksTool.handler({ parent_task_id: 'parent-1', tasks: [{ title: 'Do the thing' }] }, { cwd: dir });
+      assert.equal(result.isError, true);
+      assert.match(result.content[0].text, /Unexpected error during pm_create_subtasks/);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }));

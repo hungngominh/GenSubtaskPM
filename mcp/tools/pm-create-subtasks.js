@@ -1,6 +1,6 @@
 // mcp/tools/pm-create-subtasks.js
 import { z } from 'zod';
-import { createTask, getTasks } from '../pm-client.js';
+import { createTask, getTasks, PmApiError } from '../pm-client.js';
 import { getTasksForParent, upsertTask } from '../state-store.js';
 import { resolveConfig } from '../config.js';
 import { describePmError } from '../tool-error.js';
@@ -54,7 +54,10 @@ export const pmCreateSubtasksTool = {
         created.push({ title: task.title, ...record });
       }
     } catch (err) {
-      return { content: [{ type: 'text', text: describePmError(err) }], isError: true };
+      const message = err instanceof PmApiError
+        ? describePmError(err)
+        : `Unexpected error during pm_create_subtasks: ${err.message}`;
+      return { content: [{ type: 'text', text: message }], isError: true };
     }
 
     const lines = [];

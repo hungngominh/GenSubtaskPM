@@ -12,6 +12,20 @@ implementation work happens locally.
 3. Add this plugin's `.mcp.json` entry to your Claude Code MCP configuration (already bundled for
    plugin installs).
 
+### Quick setup for another project (client machine)
+
+To wire up a *different* project to this same MCP server (no code duplication — it points at this
+repo's `mcp/server.js` by absolute path):
+
+```
+node scripts/setup-client.js <path-to-target-project>
+```
+
+This creates/merges `.mcp.json` in the target project and adds the PM-sync files to its
+`.gitignore`. It does not touch the API key — open a Claude Code session in the target project
+afterward and run `pm_setup` to enter and validate `PM_API_KEY` (keeps the key out of shell
+history and logs).
+
 ## Tools
 
 | Tool | Purpose |

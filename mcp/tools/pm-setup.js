@@ -1,7 +1,7 @@
 // mcp/tools/pm-setup.js
 import { z } from 'zod';
 import { resolveConfig, persistApiKey } from '../config.js';
-import { getProjectInfoMini } from '../pm-client.js';
+import { getProjectInfoMini, PmApiError } from '../pm-client.js';
 import { describePmError } from '../tool-error.js';
 
 export const pmSetupTool = {
@@ -36,7 +36,10 @@ export const pmSetupTool = {
         }],
       };
     } catch (err) {
-      return { content: [{ type: 'text', text: describePmError(err) }], isError: true };
+      const message = err instanceof PmApiError
+        ? describePmError(err)
+        : `Unexpected error during pm_setup: ${err.message}`;
+      return { content: [{ type: 'text', text: message }], isError: true };
     }
   },
 };

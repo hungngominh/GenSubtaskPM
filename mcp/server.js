@@ -6,8 +6,9 @@ import { pmSetupTool } from './tools/pm-setup.js';
 import { pmCreateSubtasksTool } from './tools/pm-create-subtasks.js';
 import { pmStartSubtaskTool } from './tools/pm-start-subtask.js';
 import { pmCompleteSubtaskTool } from './tools/pm-complete-subtask.js';
+import { pmUpdateProgressTool } from './tools/pm-update-progress.js';
 
-const TOOLS = [pmSetupTool, pmCreateSubtasksTool, pmStartSubtaskTool, pmCompleteSubtaskTool];
+const TOOLS = [pmSetupTool, pmCreateSubtasksTool, pmStartSubtaskTool, pmCompleteSubtaskTool, pmUpdateProgressTool];
 
 const server = new McpServer({ name: 'pm-gensubtask', version: '0.1.0' });
 

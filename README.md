@@ -3,6 +3,9 @@
 MCP server + Claude Code skill that creates and syncs subtasks with the Alliance ITSC PM system while
 implementation work happens locally.
 
+> **Note (for AI agents & new clones):** after `git clone`/`git pull`, dependencies are not installed
+> automatically — run `npm install` before running the server, tests, or any script in this repo.
+
 ## Setup
 
 1. `npm install`

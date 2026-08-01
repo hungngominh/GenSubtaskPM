@@ -5,11 +5,17 @@ import { getTasksForParent, upsertTask } from '../state-store.js';
 import { resolveConfig } from '../config.js';
 import { describePmError } from '../tool-error.js';
 
+const WORKSTREAM_VALUES = ['BA', 'DEV', 'DEPLOY', 'CROSS'];
+const LAYER_VALUES = [
+  'REQUIREMENT', 'FEATURE', 'ANALYSIS', 'BA', 'UI', 'API', 'DATA', 'TEST', 'SYS', 'SEC',
+  'DEPLOY', 'PLAN', 'REVIEW', 'FIXBUG', 'INTERGATE', 'DOC', 'OTHER',
+];
+
 const taskInputSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
-  workstream: z.string().optional(),
-  layer: z.string().optional(),
+  workstream: z.enum(WORKSTREAM_VALUES).optional(),
+  layer: z.enum(LAYER_VALUES).optional(),
   assignee_id: z.string().min(1, 'assignee_id is required — call pm_list_members to find a valid user_id'),
 });
 

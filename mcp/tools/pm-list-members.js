@@ -7,7 +7,8 @@ export const pmListMembersTool = {
   name: 'pm_list_members',
   description:
     'Lists the current project\'s members with their user_id and roles. Call this before ' +
-    'pm_create_subtasks whenever a subtask needs an assignee_id — never guess a user_id.',
+    'pm_create_parent_task or pm_create_subtasks to ask the operator who to assign each task to — never ' +
+    'guess a user_id.',
   inputSchema: {},
   handler: async (_args, ctx = {}) => {
     const cwd = ctx.cwd || process.cwd();

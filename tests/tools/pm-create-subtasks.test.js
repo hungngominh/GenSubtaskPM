@@ -131,18 +131,24 @@ test('resolves with isError instead of throwing on a non-PmApiError failure', ()
     }
   }));
 
-test('rejects the whole batch without creating anything when a task is missing assignee_id', () =>
+test('creates a task with no assignee_id when the operator explicitly opts out', () =>
   withTempDir(async (dir) => {
-    let calls = 0;
-    global.fetch = async () => {
-      calls++;
-      throw new Error('should not be called');
+    let createCalls = 0;
+    global.fetch = async (url) => {
+      if (url.endsWith('/get-tasks')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: [{ id: 'parent-1', subtasks: [] }] }) };
+      }
+      createCalls++;
+      return {
+        ok: true,
+        status: 201,
+        json: async () => ({ status: 'success', data: { id: 'child-1', code: 'TASK-0001', title: 'Task Two', status_code: 'BACKLOG' } }),
+      };
     };
     const result = await pmCreateSubtasksTool.handler(
-      { parent_task_id: 'parent-1', tasks: [{ title: 'Task One', assignee_id: 'user-1' }, { title: 'Task Two' }] },
+      { parent_task_id: 'parent-1', tasks: [{ title: 'Task Two' }] },
       { cwd: dir }
     );
-    assert.equal(calls, 0);
-    assert.equal(result.isError, true);
-    assert.match(result.content[0].text, /Missing assignee_id for: Task Two/);
+    assert.equal(createCalls, 1);
+    assert.match(result.content[0].text, /Created 1 subtask/);
   }));

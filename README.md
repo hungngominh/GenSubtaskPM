@@ -34,8 +34,8 @@ history and logs).
 | Tool | Purpose |
 |---|---|
 | `pm_setup` | Resolve and validate `PM_API_KEY` against the PM system. |
-| `pm_create_parent_task` | Create a top-level task (task cha) with no `parent_task_id`, deduplicated by title. Requires `assignee_id`. |
-| `pm_create_subtasks` | Create PM subtasks under a parent task, deduplicated. |
+| `pm_create_parent_task` | Create a top-level task (task cha) with no `parent_task_id`, deduplicated by title. |
+| `pm_create_subtasks` | Create PM subtasks under a parent task, deduplicated. Agents should resolve `assignee_id` via `pm_list_members` and ask the operator, leaving it unset only if the operator explicitly opts out. |
 | `pm_start_subtask` | Mark a subtask DOING + log a Started-at checklist entry. |
 | `pm_complete_subtask` | Mark a subtask DONE at 100% + log a Completed-at checklist entry. Requires `actual_hours` (hours worked since the last update); it is added to the task's existing total, not overwritten. |
 | `pm_update_progress` | Patch `progress_percent` / `status_code` mid-task. Requires `actual_hours` (hours worked since the last update); it is added to the task's existing total, not overwritten. |

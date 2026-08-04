@@ -4,7 +4,7 @@ import { createTask, getTasks, PmApiError } from '../pm-client.js';
 import { getTasksForParent, upsertTask } from '../state-store.js';
 import { resolveConfig } from '../config.js';
 import { describePmError } from '../tool-error.js';
-import { WORKSTREAM_VALUES, LAYER_VALUES } from '../task-fields.js';
+import { WORKSTREAM_VALUES, LAYER_VALUES, PRIORITY_VALUES, CREATE_STATUS_CODE_VALUES } from '../task-fields.js';
 
 const taskInputSchema = z.object({
   title: z.string(),
@@ -14,6 +14,13 @@ const taskInputSchema = z.object({
   assignee_id: z.string().optional(),
   due_date: z.string().optional(),
   estimate_hours: z.number().optional(),
+  priority: z.enum(PRIORITY_VALUES).optional(),
+  status_code: z.enum(CREATE_STATUS_CODE_VALUES).optional(),
+  size: z.number().min(1).max(10).optional(),
+  difficulty: z.number().min(1).max(5).optional(),
+  impact: z.number().min(1).max(5).optional(),
+  is_notify_task: z.boolean().optional(),
+  link_slide: z.string().optional(),
 });
 
 function formatBatchSummary(created, skipped) {
@@ -37,7 +44,8 @@ export const pmCreateSubtasksTool = {
     '(checked locally and against the live PM system). Before calling, call pm_list_members and ask the ' +
     'operator who each task should be assigned to — only leave a task\'s assignee_id unset if the operator ' +
     'explicitly says not to assign anyone; never invent a user_id. Only set a task\'s due_date/estimate_hours ' +
-    'when the operator explicitly asks for a deadline or time estimate for it — do not invent one.',
+    'when the operator explicitly asks for a deadline or time estimate for it — do not invent one. Same rule ' +
+    'for priority/size/difficulty/impact/is_notify_task/link_slide/status_code: leave unset unless asked.',
   inputSchema: { parent_task_id: z.string(), tasks: z.array(taskInputSchema) },
   handler: async ({ parent_task_id, tasks }, ctx = {}) => {
     const cwd = ctx.cwd || process.cwd();

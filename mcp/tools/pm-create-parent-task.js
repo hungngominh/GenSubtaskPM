@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createTask, getTasks, PmApiError } from '../pm-client.js';
 import { resolveConfig } from '../config.js';
 import { describePmError } from '../tool-error.js';
-import { WORKSTREAM_VALUES, LAYER_VALUES } from '../task-fields.js';
+import { WORKSTREAM_VALUES, LAYER_VALUES, PRIORITY_VALUES, CREATE_STATUS_CODE_VALUES } from '../task-fields.js';
 
 export const pmCreateParentTaskTool = {
   name: 'pm_create_parent_task',
@@ -15,7 +15,8 @@ export const pmCreateParentTaskTool = {
     'pm_list_members and ask the operator who this parent task should be assigned to — only leave ' +
     'assignee_id unset if the operator explicitly says not to assign anyone; never invent a user_id. ' +
     'Only set due_date/estimate_hours when the operator explicitly asks for a deadline or time estimate — ' +
-    'do not invent one.',
+    'do not invent one. priority/size/difficulty/impact/is_notify_task/link_slide/status_code are also ' +
+    'optional — only set them when the operator explicitly asks for that value.',
   inputSchema: {
     title: z.string(),
     description: z.string().optional(),
@@ -24,8 +25,21 @@ export const pmCreateParentTaskTool = {
     assignee_id: z.string().optional(),
     due_date: z.string().optional(),
     estimate_hours: z.number().optional(),
+    priority: z.enum(PRIORITY_VALUES).optional(),
+    status_code: z.enum(CREATE_STATUS_CODE_VALUES).optional(),
+    size: z.number().min(1).max(10).optional(),
+    difficulty: z.number().min(1).max(5).optional(),
+    impact: z.number().min(1).max(5).optional(),
+    is_notify_task: z.boolean().optional(),
+    link_slide: z.string().optional(),
   },
-  handler: async ({ title, description, workstream, layer, assignee_id, due_date, estimate_hours }, ctx = {}) => {
+  handler: async (
+    {
+      title, description, workstream, layer, assignee_id, due_date, estimate_hours,
+      priority, status_code, size, difficulty, impact, is_notify_task, link_slide,
+    },
+    ctx = {}
+  ) => {
     const cwd = ctx.cwd || process.cwd();
     const config = resolveConfig(cwd);
 
@@ -43,7 +57,10 @@ export const pmCreateParentTaskTool = {
         };
       }
 
-      const response = await createTask(config, { title, description, workstream, layer, assignee_id, due_date, estimate_hours });
+      const response = await createTask(config, {
+        title, description, workstream, layer, assignee_id, due_date, estimate_hours,
+        priority, status_code, size, difficulty, impact, is_notify_task, link_slide,
+      });
       const { id, code } = response.data;
       return {
         content: [{

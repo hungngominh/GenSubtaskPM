@@ -174,3 +174,36 @@ test('passes due_date and estimate_hours through to create-task when the operato
     assert.equal(sentPayload.due_date, '2026-08-15');
     assert.equal(sentPayload.estimate_hours, 6);
   }));
+
+test('passes priority/size/difficulty/impact/is_notify_task/link_slide/status_code through to create-task', () =>
+  withTempDir(async (dir) => {
+    let sentPayload = null;
+    global.fetch = async (url, opts) => {
+      if (url.endsWith('/get-tasks')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: [{ id: 'parent-1', subtasks: [] }] }) };
+      }
+      sentPayload = JSON.parse(opts.body);
+      return {
+        ok: true,
+        status: 201,
+        json: async () => ({ status: 'success', data: { id: 'child-1', code: 'TASK-0001', title: 'Do the thing', status_code: 'TODO' } }),
+      };
+    };
+    await pmCreateSubtasksTool.handler(
+      {
+        parent_task_id: 'parent-1',
+        tasks: [{
+          title: 'Do the thing', priority: 'P0', status_code: 'TODO', size: 3, difficulty: 2, impact: 1,
+          is_notify_task: false, link_slide: 'https://docs.google.com/presentation/d/xyz',
+        }],
+      },
+      { cwd: dir }
+    );
+    assert.equal(sentPayload.priority, 'P0');
+    assert.equal(sentPayload.status_code, 'TODO');
+    assert.equal(sentPayload.size, 3);
+    assert.equal(sentPayload.difficulty, 2);
+    assert.equal(sentPayload.impact, 1);
+    assert.equal(sentPayload.is_notify_task, false);
+    assert.equal(sentPayload.link_slide, 'https://docs.google.com/presentation/d/xyz');
+  }));

@@ -63,6 +63,34 @@ test('creates a parent task with no assignee_id when the operator explicitly opt
     assert.match(result.content[0].text, /Created parent task TASK-0001 \(parent-1\)/);
   }));
 
+test('passes priority/size/difficulty/impact/is_notify_task/link_slide/status_code through to create-task', () =>
+  withTempDir(async (dir) => {
+    let sentPayload = null;
+    global.fetch = async (url, opts) => {
+      if (url.endsWith('/get-tasks')) return { ok: true, status: 200, json: async () => ({ status: 'success', data: [] }) };
+      sentPayload = JSON.parse(opts.body);
+      return {
+        ok: true,
+        status: 201,
+        json: async () => ({ status: 'success', data: { id: 'parent-1', code: 'TASK-0001', title: 'New Epic', status_code: 'TODO' } }),
+      };
+    };
+    await pmCreateParentTaskTool.handler(
+      {
+        title: 'New Epic', priority: 'P1', status_code: 'TODO', size: 8, difficulty: 4, impact: 5,
+        is_notify_task: true, link_slide: 'https://docs.google.com/presentation/d/abc',
+      },
+      { cwd: dir }
+    );
+    assert.equal(sentPayload.priority, 'P1');
+    assert.equal(sentPayload.status_code, 'TODO');
+    assert.equal(sentPayload.size, 8);
+    assert.equal(sentPayload.difficulty, 4);
+    assert.equal(sentPayload.impact, 5);
+    assert.equal(sentPayload.is_notify_task, true);
+    assert.equal(sentPayload.link_slide, 'https://docs.google.com/presentation/d/abc');
+  }));
+
 test('passes due_date and estimate_hours through to create-task when the operator asks for them', () =>
   withTempDir(async (dir) => {
     let sentPayload = null;

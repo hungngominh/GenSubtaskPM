@@ -1,3 +1,5 @@
+**English** | [Tiếng Việt](README.vi.md)
+
 # MCP-GenSubTask
 
 MCP server + Claude Code skill that creates and syncs subtasks with the Alliance ITSC PM system while
@@ -34,13 +36,20 @@ history and logs).
 | Tool | Purpose |
 |---|---|
 | `pm_setup` | Resolve and validate `PM_API_KEY` against the PM system. |
-| `pm_create_parent_task` | Create a top-level task (task cha) with no `parent_task_id`, deduplicated by title. |
-| `pm_create_subtasks` | Create PM subtasks under a parent task, deduplicated. Agents should resolve `assignee_id` via `pm_list_members` and ask the operator, leaving it unset only if the operator explicitly opts out. |
+| `pm_create_parent_task` | Create a top-level task (task cha) with no `parent_task_id`, deduplicated by title. Optional fields beyond `title`/`description`/`workstream`/`layer`/`assignee_id`: `due_date`, `estimate_hours`, `priority`, `status_code`, `size`, `difficulty`, `impact`, `is_notify_task`, `link_slide` — only set when the operator explicitly asks for that value. |
+| `pm_create_subtasks` | Create PM subtasks under a parent task, deduplicated. Agents should resolve `assignee_id` via `pm_list_members` and ask the operator, leaving it unset only if the operator explicitly opts out. Same optional fields as `pm_create_parent_task`, set per subtask. |
 | `pm_start_subtask` | Mark a subtask DOING + log a Started-at checklist entry. |
 | `pm_complete_subtask` | Mark a subtask DONE at 100% + log a Completed-at checklist entry. Requires `actual_hours` (hours worked since the last update); it is added to the task's existing total, not overwritten. |
 | `pm_update_progress` | Patch `progress_percent` / `status_code` mid-task. Requires `actual_hours` (hours worked since the last update); it is added to the task's existing total, not overwritten. |
 | `pm_audit_status` | Read-only cross-check of local sync state vs. the live PM system. |
 | `pm_list_members` | List project members with `user_id`/roles, for resolving `assignee_id`. |
+| `pm_get_task` | Read-only detail lookup for a single task by id — status, assignee, progress, hours, parent link. |
+| `pm_list_tasks` | Read-only listing of all active top-level tasks in the project, each with its subtask titles. |
+| `pm_add_checklist_items` | Add one or more checklist items (lightweight sub-steps/verification items) to an existing task. Creation only — no get/update/delete for checklist items. |
+
+Note: `assignee_id` and other task fields (`title`, `description`, `workstream`, etc.) cannot be changed on
+an existing task — the PM API's `PATCH tasks/:taskId` endpoint only accepts `status_code`, `actual_hours`,
+and `progress_percent` (see `bot_tasks.md` §2.6, §3). There is no reassign/rename/delete endpoint.
 
 ## Skill
 

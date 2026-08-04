@@ -9,9 +9,9 @@ Runs the same per-task loop as superpowers:subagent-driven-development (fresh su
 two-stage review), with PM system sync calls woven into four specific points. Use this instead of
 subagent-driven-development when the user wants task progress visible on the PM board as work happens.
 
-**Requires:** the MCP-GenSubTask server's 6 tools available in this session, and a `parent_task_id` for
+**Requires:** the MCP-GenSubTask server's 8 tools available in this session, and a `parent_task_id` for
 the PM task these subtasks nest under (ask the user if not already known — resolve via `pm_setup` then
-look it up in the PM system if needed; never guess it).
+look it up in the PM system if needed, or create one with `pm_create_parent_task`; never guess it).
 
 ## The Process
 

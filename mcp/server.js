@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { pmSetupTool } from './tools/pm-setup.js';
+import { pmCreateParentTaskTool } from './tools/pm-create-parent-task.js';
 import { pmCreateSubtasksTool } from './tools/pm-create-subtasks.js';
 import { pmStartSubtaskTool } from './tools/pm-start-subtask.js';
 import { pmCompleteSubtaskTool } from './tools/pm-complete-subtask.js';
@@ -10,7 +11,7 @@ import { pmUpdateProgressTool } from './tools/pm-update-progress.js';
 import { pmAuditStatusTool } from './tools/pm-audit-status.js';
 import { pmListMembersTool } from './tools/pm-list-members.js';
 
-const TOOLS = [pmSetupTool, pmCreateSubtasksTool, pmStartSubtaskTool, pmCompleteSubtaskTool, pmUpdateProgressTool, pmAuditStatusTool, pmListMembersTool];
+const TOOLS = [pmSetupTool, pmCreateParentTaskTool, pmCreateSubtasksTool, pmStartSubtaskTool, pmCompleteSubtaskTool, pmUpdateProgressTool, pmAuditStatusTool, pmListMembersTool];
 
 const server = new McpServer({ name: 'pm-gensubtask', version: '0.1.0' });
 

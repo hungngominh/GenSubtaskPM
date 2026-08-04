@@ -4,12 +4,7 @@ import { createTask, getTasks, PmApiError } from '../pm-client.js';
 import { getTasksForParent, upsertTask } from '../state-store.js';
 import { resolveConfig } from '../config.js';
 import { describePmError } from '../tool-error.js';
-
-const WORKSTREAM_VALUES = ['BA', 'DEV', 'DEPLOY', 'CROSS'];
-const LAYER_VALUES = [
-  'REQUIREMENT', 'FEATURE', 'ANALYSIS', 'BA', 'UI', 'API', 'DATA', 'TEST', 'SYS', 'SEC',
-  'DEPLOY', 'PLAN', 'REVIEW', 'FIXBUG', 'INTERGATE', 'DOC', 'OTHER',
-];
+import { WORKSTREAM_VALUES, LAYER_VALUES } from '../task-fields.js';
 
 const taskInputSchema = z.object({
   title: z.string(),

@@ -13,15 +13,19 @@ export const pmCreateParentTaskTool = {
     'the same title already exists in the PM system. Call this first when no suitable parent task exists ' +
     'yet; never call pm_create_subtasks with a fabricated parent_task_id. Before calling, call ' +
     'pm_list_members and ask the operator who this parent task should be assigned to — only leave ' +
-    'assignee_id unset if the operator explicitly says not to assign anyone; never invent a user_id.',
+    'assignee_id unset if the operator explicitly says not to assign anyone; never invent a user_id. ' +
+    'Only set due_date/estimate_hours when the operator explicitly asks for a deadline or time estimate — ' +
+    'do not invent one.',
   inputSchema: {
     title: z.string(),
     description: z.string().optional(),
     workstream: z.enum(WORKSTREAM_VALUES).optional(),
     layer: z.enum(LAYER_VALUES).optional(),
     assignee_id: z.string().optional(),
+    due_date: z.string().optional(),
+    estimate_hours: z.number().optional(),
   },
-  handler: async ({ title, description, workstream, layer, assignee_id }, ctx = {}) => {
+  handler: async ({ title, description, workstream, layer, assignee_id, due_date, estimate_hours }, ctx = {}) => {
     const cwd = ctx.cwd || process.cwd();
     const config = resolveConfig(cwd);
 
@@ -39,7 +43,7 @@ export const pmCreateParentTaskTool = {
         };
       }
 
-      const response = await createTask(config, { title, description, workstream, layer, assignee_id });
+      const response = await createTask(config, { title, description, workstream, layer, assignee_id, due_date, estimate_hours });
       const { id, code } = response.data;
       return {
         content: [{

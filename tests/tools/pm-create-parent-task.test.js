@@ -25,7 +25,7 @@ test('creates a new parent task via POST create-task when no title match exists'
         json: async () => ({ status: 'success', data: { id: 'parent-1', code: 'TASK-0001', title: 'New Epic', status_code: 'BACKLOG' } }),
       };
     };
-    const result = await pmCreateParentTaskTool.handler({ title: 'New Epic' }, { cwd: dir });
+    const result = await pmCreateParentTaskTool.handler({ title: 'New Epic', assignee_id: 'user-1' }, { cwd: dir });
     assert.equal(createCalls, 1);
     assert.match(result.content[0].text, /Created parent task TASK-0001 \(parent-1\)/);
     assert.match(result.content[0].text, /parent_task_id="parent-1"/);
@@ -41,9 +41,23 @@ test('skips creating when a top-level task with the same title already exists', 
       createCalls++;
       throw new Error('should not be called');
     };
-    const result = await pmCreateParentTaskTool.handler({ title: 'New Epic' }, { cwd: dir });
+    const result = await pmCreateParentTaskTool.handler({ title: 'New Epic', assignee_id: 'user-1' }, { cwd: dir });
     assert.equal(createCalls, 0);
     assert.match(result.content[0].text, /already exists — parent_task_id=parent-1/);
+  }));
+
+test('rejects without calling the API when assignee_id is missing', () =>
+  withTempDir(async (dir) => {
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      throw new Error('should not be called');
+    };
+    const result = await pmCreateParentTaskTool.handler({ title: 'New Epic' }, { cwd: dir });
+    assert.equal(calls, 0);
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Missing assignee_id/);
+    assert.match(result.content[0].text, /pm_list_members/);
   }));
 
 test('surfaces a VALIDATION error from create-task without throwing', () =>
@@ -52,7 +66,7 @@ test('surfaces a VALIDATION error from create-task without throwing', () =>
       if (url.endsWith('/get-tasks')) return { ok: true, status: 200, json: async () => ({ status: 'success', data: [] }) };
       return { ok: false, status: 400, json: async () => ({ status: 'error', message: 'title is required' }) };
     };
-    const result = await pmCreateParentTaskTool.handler({ title: '' }, { cwd: dir });
+    const result = await pmCreateParentTaskTool.handler({ title: '', assignee_id: 'user-1' }, { cwd: dir });
     assert.equal(result.isError, true);
     assert.match(result.content[0].text, /title is required/);
   }));
@@ -65,7 +79,7 @@ test('resolves with isError instead of throwing on a non-PmApiError failure', ()
       throw new TypeError('fetch failed');
     };
     try {
-      const result = await pmCreateParentTaskTool.handler({ title: 'New Epic' }, { cwd: dir });
+      const result = await pmCreateParentTaskTool.handler({ title: 'New Epic', assignee_id: 'user-1' }, { cwd: dir });
       assert.equal(result.isError, true);
       assert.match(result.content[0].text, /Unexpected error during pm_create_parent_task/);
     } finally {

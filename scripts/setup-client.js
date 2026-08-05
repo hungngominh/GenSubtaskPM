@@ -41,14 +41,19 @@ mcpConfig.mcpServers['pm-gensubtask'] = {
 writeFileSync(mcpJsonPath, `${JSON.stringify(mcpConfig, null, 2)}\n`);
 console.log(`Wrote ${mcpJsonPath}`);
 
-// --- .gitignore: append PM-sync entries if not already present ---
+// --- .gitignore: append any PM-sync entries not already present ---
+// .mcp.json is included because it embeds this machine's absolute path to server.js —
+// not portable to other developers/machines, so it must stay local and untracked.
 const gitignorePath = join(resolvedTarget, '.gitignore');
-const pmSyncBlock = '## PM sync (contains API key / local state — never commit)\n.pm-sync-config.json\n.pm-sync-state.json\n';
+const pmSyncEntries = ['.pm-sync-config.json', '.pm-sync-state.json', '.mcp.json'];
 const existingGitignore = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf8') : '';
-if (!existingGitignore.includes('.pm-sync-config.json')) {
+const missingEntries = pmSyncEntries.filter((entry) => !existingGitignore.includes(entry));
+if (missingEntries.length > 0) {
   const needsLeadingNewline = existingGitignore.length > 0 && !existingGitignore.endsWith('\n');
-  appendFileSync(gitignorePath, `${needsLeadingNewline ? '\n' : ''}${existingGitignore ? '\n' : ''}${pmSyncBlock}`);
-  console.log(`Updated ${gitignorePath}`);
+  const needsHeader = !existingGitignore.includes('## PM sync');
+  const block = `${needsHeader ? '## PM sync (contains API key / local state — never commit)\n' : ''}${missingEntries.join('\n')}\n`;
+  appendFileSync(gitignorePath, `${needsLeadingNewline ? '\n' : ''}${existingGitignore ? '\n' : ''}${block}`);
+  console.log(`Updated ${gitignorePath} (added: ${missingEntries.join(', ')})`);
 } else {
   console.log(`${gitignorePath} already ignores PM sync files — skipped.`);
 }

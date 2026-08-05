@@ -1,6 +1,8 @@
 {
-  "pm-gensubtask": {
-    "command": "node",
-    "args": ["mcp/server.js"]
+  "mcpServers": {
+    "pm-gensubtask": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"]
+    }
   }
 }

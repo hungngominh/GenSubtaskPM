@@ -33,7 +33,7 @@ export const pmUpdateProgressTool = {
 
     try {
       const detail = await getTaskDetail(config, task_id);
-      const previousHours = detail?.data?.actual_hours || 0;
+      const previousHours = Number(detail?.data?.actual_hours) || 0;
       const totalHours = previousHours + actual_hours;
 
       const payload = { actual_hours: totalHours };

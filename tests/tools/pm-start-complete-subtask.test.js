@@ -39,7 +39,7 @@ test('pm_complete_subtask PATCHes DONE/100 with accumulated actual_hours and pos
     global.fetch = async (url, opts) => {
       calls.push({ url, body: opts.body ? JSON.parse(opts.body) : null });
       if (url.endsWith('/get-task/child-1')) {
-        return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', actual_hours: 4 } }) };
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', actual_hours: '4.00' } }) };
       }
       if (url.endsWith('/tasks/child-1')) {
         return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', status_code: 'DONE' } }) };
@@ -53,6 +53,26 @@ test('pm_complete_subtask PATCHes DONE/100 with accumulated actual_hours and pos
     const checklistCall = calls.find((c) => c.body?.items);
     assert.equal(checklistCall.body.items[0].title, 'Completed at');
     assert.equal(getTasksForParent(dir, 'parent-1')['Do the thing'].status, 'DONE');
+  }));
+
+test('pm_complete_subtask numerically adds actual_hours even when the API returns it as a decimal string', () =>
+  withTempDir(async (dir) => {
+    upsertTask(dir, 'parent-1', 'Do the thing', { id: 'child-1', code: 'TASK-0001', status: 'DOING' });
+    const calls = [];
+    global.fetch = async (url, opts) => {
+      calls.push({ url, body: opts.body ? JSON.parse(opts.body) : null });
+      if (url.endsWith('/get-task/child-1')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', actual_hours: '0.50' } }) };
+      }
+      if (url.endsWith('/tasks/child-1')) {
+        return { ok: true, status: 200, json: async () => ({ status: 'success', data: { id: 'child-1', status_code: 'DONE' } }) };
+      }
+      return { ok: true, status: 201, json: async () => ({ status: 'success', data: [] }) };
+    };
+    await pmCompleteSubtaskTool.handler({ task_id: 'child-1', actual_hours: 1.5 }, { cwd: dir });
+
+    const patchCall = calls.find((c) => c.url.endsWith('/tasks/child-1'));
+    assert.deepEqual(patchCall.body, { status_code: 'DONE', progress_percent: 100, actual_hours: 2 });
   }));
 
 test('pm_complete_subtask rejects when actual_hours is missing, without calling the API', () =>

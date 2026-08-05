@@ -32,7 +32,7 @@ export const pmCompleteSubtaskTool = {
 
     try {
       const detail = await getTaskDetail(config, task_id);
-      const previousHours = detail?.data?.actual_hours || 0;
+      const previousHours = Number(detail?.data?.actual_hours) || 0;
       const totalHours = previousHours + actual_hours;
 
       const patchPayload = { status_code: 'DONE', progress_percent: 100, actual_hours: totalHours };

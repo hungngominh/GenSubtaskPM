@@ -38,6 +38,14 @@ test('pm_update_progress adds actual_hours to the existing total instead of over
     assert.equal(body.actual_hours, 7.5);
   }));
 
+test('pm_update_progress numerically adds actual_hours even when the API returns it as a decimal string', () =>
+  withTempDir(async (dir) => {
+    let body;
+    global.fetch = mockFetchWithDetail('0.50', (b) => { body = b; });
+    await pmUpdateProgressTool.handler({ task_id: 'child-1', actual_hours: 1.5 }, { cwd: dir });
+    assert.equal(body.actual_hours, 2);
+  }));
+
 test('pm_update_progress rejects when actual_hours is missing, without calling the API', () =>
   withTempDir(async (dir) => {
     let called = false;

@@ -19,7 +19,8 @@ export const pmCreateParentTaskTool = {
     'optional — only set them when the operator explicitly asks for that value.',
   inputSchema: {
     title: z.string(),
-    description: z.string().optional(),
+    description: z.string().optional()
+      .describe('Task description. Supports Markdown — format as proper Markdown (headings, lists, code blocks, etc.) before sending.'),
     workstream: z.enum(WORKSTREAM_VALUES).optional(),
     layer: z.enum(LAYER_VALUES).optional(),
     assignee_id: z.string().optional(),

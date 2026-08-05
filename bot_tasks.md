@@ -55,7 +55,7 @@ Resolve the base URL and API key from environment variables first — never hard
 1. **Resolve environment and validate access.** Follow "Environment Resolution" above to get the base URL and `x-api-key` (prompting + confirming via `project-info-mini` if the key is missing). If any call returns `401`, stop immediately (see Error Handling) rather than guessing at a fix.
 2. **Check for duplicates before creating.** Call `GET get-tasks` (or `GET get-task/:taskId` if you already hold an id) and compare titles/descriptions to avoid creating a task that already exists.
 3. **Resolve the assignee.** If the operator wants the task assigned to themselves, use `PM_MYID` (see "My user ID" in Environment Resolution) instead of guessing from `get-members`. Otherwise, call `GET get-members` to get valid `user_id`s and their `roles`, and pick an assignee whose role matches the task's `workstream`/`layer` (e.g. a `DEV_LEAD` for an architecture task). Never fabricate a UUID.
-4. **Create the task.** Call `POST create-task` using only the documented enum values for `workstream`, `layer`, `status_code`, and `priority`. Do **not** send `feature_id` or `requirement_id` — there is currently no reliable way for a bot agent to determine which requirement/feature a task belongs to. Do **not** send `type` (it only drives UI display, not agent logic), `tags`, or `phase` (deprecated fallback for `workstream`) either.
+4. **Create the task.** Call `POST create-task` using only the documented enum values for `workstream`, `layer`, `status_code`, and `priority`. `description` supports Markdown — format it into proper Markdown before sending, rather than a flat paragraph. Do **not** send `feature_id` or `requirement_id` — there is currently no reliable way for a bot agent to determine which requirement/feature a task belongs to. Do **not** send `type` (it only drives UI display, not agent logic), `tags`, or `phase` (deprecated fallback for `workstream`) either.
 5. **Attach checklist items (optional).** Using the `id` returned from step 4, call `POST tasks/:taskId/checklists` to add sub-steps or verification items. Only use this for lightweight, non-assignable sub-steps — for real sub-tasks that need their own status/assignee, see "Creating Subtasks" below.
 6. **Check status before dependent work.** Before starting work that depends on another task, call `GET get-task/:taskId` to confirm its current `status_code`/`assignee_id` rather than assuming.
 7. **If a task's status, actual hours, or progress needs correction,** call `PATCH tasks/:taskId` (§2.6) with only the field(s) that changed. For any other correction (title, description, assignee, workstream, etc.) or a delete, there is still no endpoint — escalate via whatever activity/notification channel is available, or inform the human operator.
@@ -113,7 +113,7 @@ All standard task fields are supported:
 | Field Name | Type | Description | Required |
 |:---|:---|:---|:---|
 | `title` | String | Task title (max 255 chars). | **Yes** |
-| `description` | String | Task description. | No |
+| `description` | String | Task description. **Supports Markdown** — format the content into proper Markdown (headings, lists, code blocks, etc. as appropriate) before sending. | No |
 | `workstream` | String | Workstream enum, one of: `'BA'`, `'DEV'`, `'DEPLOY'`, `'CROSS'`. | No (defaults to `'DEV'`, or fallback to `phase`) |
 | `phase` | String | ~~Backward compatibility fallback mapping to `workstream`.~~ **Do not send from bot agents** — deprecated, use `workstream` instead. | No |
 | `feature_id` | String (UUID) | ID of feature to associate with this task. **Do not send from bot agents** — there is currently no reliable way for a bot agent to determine the correct feature. | No |
@@ -326,7 +326,7 @@ Create one or more checklist items for a specific task.
 | Field Name | Type | Description | Required |
 |:---|:---|:---|:---|
 | `items[].title` | String | Checklist item title (max 255 chars). | **Yes** |
-| `items[].description` | String | Checklist item description. | No |
+| `items[].description` | String | Checklist item description. **Supports Markdown** — format the content into proper Markdown before sending. | No |
 | `items[].input_type` | String | One of `'CHECKBOX'`, `'TEXT'`, `'LINK'`. | No (defaults to `'CHECKBOX'`) |
 | `items[].target_entity_type` | String | Entity type this item targets (max 50 chars). | No |
 | `items[].value` | String | Value captured for `TEXT`/`LINK` input types. | No |

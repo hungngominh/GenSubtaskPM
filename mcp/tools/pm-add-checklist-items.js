@@ -7,7 +7,8 @@ import { CHECKLIST_INPUT_TYPE_VALUES } from '../task-fields.js';
 
 const checklistItemSchema = z.object({
   title: z.string(),
-  description: z.string().optional(),
+  description: z.string().optional()
+    .describe('Checklist item description. Supports Markdown — format as proper Markdown before sending.'),
   input_type: z.enum(CHECKLIST_INPUT_TYPE_VALUES).optional(),
   value: z.string().optional(),
   is_done: z.boolean().optional(),

@@ -14,9 +14,15 @@ việc triển khai diễn ra ở local.
 2. Đặt `PM_API_KEY` (và tuỳ chọn `PM_API_URL`, mặc định là `https://pm-api.allianceitsc.com`) trong
    environment, hoặc để tool `pm_setup` hỏi khi dùng lần đầu — key sau đó được lưu vào
    `.pm-sync-config.json` trong thư mục project gọi tool (đã gitignore).
-3. Cài như một Claude Code plugin, ví dụ `/plugin install github:hungngominh/GenSubtaskPM` (hoặc qua
-   một marketplace có list repo này). File `.mcp.json` đi kèm dùng `${CLAUDE_PLUGIN_ROOT}` nên đường
-   dẫn server tự resolve theo nơi plugin được cài — không cần sửa đường dẫn tuyệt đối.
+3. Cài như một Claude Code plugin — repo này tự đóng vai trò marketplace của chính nó
+   (`.claude-plugin/marketplace.json`):
+   - CLI: `/plugin marketplace add hungngominh/GenSubtaskPM` rồi `/plugin install pm-gensubtask@gensubtask-pm`
+   - VS Code extension: gõ `/plugins`, mở tab **Marketplaces**, add `hungngominh/GenSubtaskPM`, sau đó
+     cài `pm-gensubtask` từ tab **Plugins** (`/plugin install` là lệnh CLI, chưa được đăng ký trong
+     VS Code extension)
+
+   File `.mcp.json` đi kèm dùng `${CLAUDE_PLUGIN_ROOT}` nên đường dẫn server tự resolve theo nơi plugin
+   được cài — không cần sửa đường dẫn tuyệt đối.
 
 ### Cài đặt nhanh cho project khác (máy client)
 

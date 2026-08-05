@@ -14,9 +14,14 @@ implementation work happens locally.
 2. Set `PM_API_KEY` (and optionally `PM_API_URL`, defaults to `https://pm-api.allianceitsc.com`) in your
    environment, or let the `pm_setup` tool ask for it on first use — it is then stored in
    `.pm-sync-config.json` in the calling project's directory (gitignored).
-3. Install as a Claude Code plugin, e.g. `/plugin install github:hungngominh/GenSubtaskPM` (or via a
-   marketplace listing this repo). The bundled `.mcp.json` uses `${CLAUDE_PLUGIN_ROOT}` so the server
-   path resolves automatically wherever the plugin is installed — no absolute path to edit.
+3. Install as a Claude Code plugin — this repo is its own marketplace (`.claude-plugin/marketplace.json`):
+   - CLI: `/plugin marketplace add hungngominh/GenSubtaskPM` then `/plugin install pm-gensubtask@gensubtask-pm`
+   - VS Code extension: type `/plugins`, open the **Marketplaces** tab, add `hungngominh/GenSubtaskPM`,
+     then install `pm-gensubtask` from the **Plugins** tab (`/plugin install` is CLI-only and isn't
+     registered in the VS Code extension)
+
+   The bundled `.mcp.json` uses `${CLAUDE_PLUGIN_ROOT}` so the server path resolves automatically
+   wherever the plugin is installed — no absolute path to edit.
 
 ### Quick setup for another project (client machine)
 

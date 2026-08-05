@@ -23,6 +23,19 @@ implementation work happens locally.
    The bundled `.mcp.json` uses `${CLAUDE_PLUGIN_ROOT}` so the server path resolves automatically
    wherever the plugin is installed — no absolute path to edit.
 
+### Updating
+
+Installed clients do **not** auto-pull new commits pushed to this repo (auto-update is opt-in for
+self-hosted marketplaces). After pushing changes, each client needs to run:
+
+```
+/plugin marketplace update gensubtask-pm
+```
+
+then `/reload-plugins` (or restart Claude Code) to load the new code. To make this automatic instead,
+enable auto-update for the marketplace via `/plugin` → **Marketplaces** tab → `gensubtask-pm` →
+**Enable auto-update**.
+
 ### Quick setup for another project (client machine)
 
 To wire up a *different* project to this same MCP server (no code duplication — it points at this

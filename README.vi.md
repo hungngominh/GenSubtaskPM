@@ -24,6 +24,18 @@ việc triển khai diễn ra ở local.
    File `.mcp.json` đi kèm dùng `${CLAUDE_PLUGIN_ROOT}` nên đường dẫn server tự resolve theo nơi plugin
    được cài — không cần sửa đường dẫn tuyệt đối.
 
+### Cập nhật
+
+Client đã cài **không** tự động pull commit mới được push lên repo này (auto-update mặc định tắt với
+marketplace tự host). Sau khi push code mới, mỗi client cần chạy:
+
+```
+/plugin marketplace update gensubtask-pm
+```
+
+rồi `/reload-plugins` (hoặc restart Claude Code) để nạp code mới. Muốn việc này tự động, bật auto-update
+cho marketplace qua `/plugin` → tab **Marketplaces** → `gensubtask-pm` → **Enable auto-update**.
+
 ### Cài đặt nhanh cho project khác (máy client)
 
 Để nối một project *khác* vào cùng MCP server này (không cần copy code — nó trỏ tới `mcp/server.js` của
